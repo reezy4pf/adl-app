@@ -1,0 +1,273 @@
+/* --- Main Layout --- */
+/* --- Global & Layout --- */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    /* Removed fixed height to allow content to flow naturally, usually better for responsive */
+    padding: 0;
+    background-color: transparent;
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+    box-sizing: border-box;
+    align-items: start;
+    /* Prevents columns from stretching to match height */
+}
+
+@media (max-width: 900px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+}
+
+/* --- Column 1 (Left - Placeholder) --- */
+/* --- Left Column: Sleep Dial & Stats --- */
+.left-column {
+    background: #EEEEEE;
+    border-radius: 24px;
+    padding: 20px 20px 30px 20px;
+    /* Added 10px bottom padding */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    position: relative;
+    height: fit-content;
+    /* Ensure it wraps content */
+}
+
+#sleep-clock-svg {
+    position: relative;
+    z-index: 2;
+}
+
+.instruction-text {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
+/* Clock SVG Container */
+.clock-container {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin-bottom: 20px;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    /* Prevent scroll while dragging */
+}
+
+/* Centered Labels inside Clock */
+.clock-label {
+    fill: #94a3b8;
+    font-size: 14px;
+    font-weight: 500;
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+
+.clock-label.major {
+    fill: #284393;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.clock-label.minor {
+    fill: #94a3b8;
+    /* Deeper grey */
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.clock-label.sub-minor {
+    fill: #cbd5e1;
+    /* Lightest grey */
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Stats Section */
+.sleep-stats {
+    text-align: center;
+}
+
+.time-range {
+    font-size: 1rem;
+    color: #334155;
+    /* Higher contrast */
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.sleep-duration {
+    font-size: 24px;
+    /* Reduced from 26px per request */
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0;
+    /* Removed margin */
+}
+
+.stats-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 5px;
+    margin-bottom: 20px;
+    /* Increased per request */
+}
+
+.cycle-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: #e2e8f0;
+    /* Default */
+    color: #475569;
+}
+
+.cycle-badge.success {
+    background: #d1e7dd !important;
+    color: #0f5132 !important;
+}
+
+.cycle-badge.warning {
+    background: #fef3c7 !important;
+    color: #b45309 !important;
+}
+
+.cycle-badge.danger {
+    background: #fee2e2 !important;
+    color: #b91c1c !important;
+}
+
+/* Day Selector */
+.day-selector {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.day-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+    border: 1px solid transparent;
+}
+
+.day-circle:hover {
+    background: #cbd5e1;
+}
+
+.day-circle.active {
+    background: #284393;
+    color: white;
+    box-shadow: 0 4px 6px rgba(40, 67, 147, 0.2);
+    transform: translateY(-1px);
+}
+
+/* --- Right Column: Accordion & Tools --- */
+.right-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    height: auto;
+    gap: 16px;
+}
+
+/* Accordion */
+.accordion-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    /* 10px Gap */
+}
+
+.accordion-item {
+    background-color: #EEEEEE;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.accordion-header {
+    padding: 16px 16px 0 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    color: #284393;
+}
+
+.accordion-content {
+    padding: 0 16px 16px 16px;
+    color: #64748b;
+    font-size: 0.95rem;
+    max-height: 0;
+    opacity: 0;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    /* Fix for animation */
+}
+
+.accordion-item.open .accordion-content {
+    max-height: 200px;
+    opacity: 1;
+}
+
+/* --- Bottom Section (Graph + Button) --- */
+.bottom-section {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    height: 200px;
+    /* Fixed height for the graph area */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.save-log-btn {
+    background-color: #3b82f6;
+    /* Blue */
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.2s ease;
+}
+
+.save-log-btn:hover {
+    background-color: #2563eb;
+    /* Darker Blue */
+}
+
+@media (max-width: 640px) {
+    .sleep-duration {
+        font-size: 22px !important;
+    }
+}
