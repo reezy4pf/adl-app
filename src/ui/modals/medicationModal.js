@@ -141,14 +141,19 @@ export function openRemindersModal() {
         const timeVal = existingTimes[i] || ''; // Default empty
 
         const row = document.createElement('div');
-        row.className = 'reminder-row'; // Style in CSS
+        row.className = 'reminder-row'; 
         row.style.display = 'flex';
         row.style.alignItems = 'center';
-        row.style.gap = '10px';
+        row.style.justifyContent = 'space-between'; // Spread label and input
+        row.style.gap = '16px';
 
         row.innerHTML = `
-            <label style="font-weight: 500; font-size: 0.9rem; min-width: 60px;">Dose ${i + 1}</label>
-            <input type="time" class="form-input reminder-time-input" value="${timeVal}" style="flex: 1;">
+            <label style="font-weight: 500; font-size: 1rem; color: #374151; white-space: nowrap;">Dose ${i + 1}</label>
+            <div style="position: relative; flex: 1;">
+                <input type="time" class="form-input reminder-time-input" value="${timeVal}" 
+                    onclick="try{this.showPicker()}catch(e){}"
+                    style="width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #e5e7eb; font-size: 1rem; color: #111827; background: #fff; cursor: pointer;">
+            </div>
         `;
         list.appendChild(row);
     }
