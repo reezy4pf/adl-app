@@ -6366,7 +6366,32 @@
                         const takenTodayCount = history.filter(h => new Date(h.timestamp).toDateString() === todayStr).length;
                         const freq = med.frequency || 1;
                         const isDone = takenTodayCount >= freq;
-                        const btnText = isDone ? `Done (${takenTodayCount}/${freq})` : `Take (${takenTodayCount}/${freq})`;
+                        
+                        // Time Restriction Logic
+                        const now = new Date();
+                        const currentMins = now.getHours() * 60 + now.getMinutes();
+                        let isTime = true;
+                        let btnLabel = 'Take';
+                        
+                        if (!isDone) {
+                            const reminders = med.reminderTimes || med.reminder_times || [];
+                            // Find next available slot
+                            // Assuming reminders are sorted or just take index = takenTodayCount
+                            const nextTimeStr = reminders[takenTodayCount]; // Simple ordered mapping
+                            
+                            if (nextTimeStr) {
+                                const [h, m] = nextTimeStr.split(':').map(Number);
+                                const slotMins = h * 60 + m;
+                                
+                                // Allow 60 mins before
+                                if (currentMins < slotMins - 60) {
+                                    isTime = false;
+                                    btnLabel = `Next: ${nextTimeStr}`;
+                                } else {
+                                    btnLabel = `Take ${nextTimeStr}`;
+                                }
+                            }
+                        }
 
                         card.innerHTML = `
                             <div class="med-info" style="color:white !important;">
@@ -6376,7 +6401,7 @@
                             <div class="med-action">
                                  ${isDone
                                 ? `<button class="btn-take btn-taken" style="padding:4px 8px; font-size:0.8rem;" disabled>✅</button>`
-                                : `<button class="btn-take" style="padding:4px 12px; font-size:0.85rem;" onclick="takeMed('${med.id}')">Take</button>`
+                                : `<button class="btn-take" style="padding:4px 12px; font-size:0.85rem; background: ${isTime ? 'var(--primary)' : '#6B7280'}; cursor: ${isTime ? 'pointer' : 'default'};" ${isTime ? `onclick="takeMed('${med.id}')"` : 'disabled'}>${btnLabel}</button>`
                             }
                             </div>
                         `;
