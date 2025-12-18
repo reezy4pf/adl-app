@@ -6,7 +6,7 @@
     min-height: auto !important;
     /* overflow: visible !important; REMOVED for scrolling */
     transition: all 0.3s ease;
-    max-width: 800px;
+    max-width: 900px;
     margin: 0 auto 20px auto;
     width: 100%;
 

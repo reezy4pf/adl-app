@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles_progress.css?v=3">
     <link rel="stylesheet" href="src/ui/modals/sleep.css">
+    <link rel="stylesheet" href="src/ui/pages/dashboard.css">
     <style>
         :root {
             --primary: #284393;
@@ -164,7 +165,7 @@
 
         .main-content {
             flex-grow: 1;
-            padding: 20px;
+            padding: 0;
             overflow-y: auto;
             width: 100%;
             /* Ensure full width */
@@ -172,10 +173,13 @@
         }
 
         .view-section {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0;
             width: 100%;
+        }
+
+        .content-padding {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
         }
 
         /* --- CARDS --- */
@@ -185,7 +189,7 @@
         /* --- TASKS --- */
         #task-container {
             width: 100%;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 0;
         }
@@ -249,6 +253,28 @@
         }
 
         .add-btn:hover {
+            background: rgba(0, 0, 0, 0.03);
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .add-btn-dashed {
+            background: transparent;
+            color: var(--text-light);
+            border: 2px dashed #D1D5DB;
+            border-radius: 12px;
+            padding: 12px;
+            width: 100%;
+            max-width: 900px; /* Explicit constraint */
+            margin: 20px auto 0 auto;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+            font-size: 0.95rem;
+            display: block; /* Ensure it respects margin auto */
+        }
+
+        .add-btn-dashed:hover {
             background: rgba(0, 0, 0, 0.03);
             color: var(--primary);
             border-color: var(--primary);
@@ -1631,7 +1657,7 @@
 
         /* --- Overview View --- */
         #view-overview {
-            padding: 20px;
+            padding: 0;
         }
 
         /* Hide today-only elements when calendar or overview views are active */
@@ -2096,7 +2122,7 @@
 
     <!-- Main Content -->
     <main class="main-content">
-        <div class="content-padding">
+
 
             <!-- Auth Modal -->
             <div id="auth-modal" class="modal-overlay" style="display:flex;">
@@ -2172,10 +2198,10 @@
                 <!-- Global Mobile Navigation Tabs -->
                 <!-- Mobile Nav Moved Outside for Sticky Behavior -->
 
-                <div id="view-today" class="view-section active" style="display:none;">
+                <div id="view-today" class="view-section content-padding active" style="display:none;">
                     <!-- Hidden by default until auth -->
 
-                    <div class="header-content" style="padding-top: 16px;">
+                    <div class="header-content" style="padding-top: 24px;">
                         <div>
                             <h1 id="current-date-display">Thursday</h1>
                             <p id="current-day-detail">December 11, 2025</p>
@@ -2273,12 +2299,11 @@
         </div> <!-- End view-today -->
 
         <!-- CALENDAR VIEW -->
-        <div id="view-calendar" class="view-section">
+        <div id="view-calendar" class="view-section content-padding">
             <h2 class="section-heading" style="margin-bottom: 32px;">Calendar</h2>
 
             <!-- Calendar Header: View Switcher & Navigation -->
-            <div class="calendar-controls-bar"
-                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+            <div class="header-content" style="padding-top: 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
                 <!-- Left: View Switcher -->
                 <div class="calendar-view-switcher" style="display: flex; align-items: center; gap: 16px;">
                     <span style="font-size: 14px; font-weight: 500; color: var(--text-light);">Calendar View</span>
@@ -2354,7 +2379,7 @@
         </div>
 
         <!-- CARE HUB VIEW -->
-        <div id="view-care-hub" class="view-section">
+        <div id="view-care-hub" class="view-section content-padding">
             <h2 class="section-heading">Care Hub</h2>
             <!-- Active Meds Section -->
             <div id="active-meds-container" style="margin-bottom: 32px; display: none;">
@@ -2390,7 +2415,7 @@
             </div>
         </div>
 
-        </div>
+
     </main>
 
 
@@ -6132,9 +6157,13 @@
         }
 
         function renderStreak() {
-            document.getElementById('streak-display').textContent = `${appData.stats.currentStreak} Days`;
-            document.getElementById('stat-current-streak').textContent = appData.stats.currentStreak;
-            document.getElementById('stat-best-streak').textContent = appData.stats.bestStreak;
+            const streakDisplay = document.getElementById('streak-display');
+            const statCurrent = document.getElementById('stat-current-streak');
+            const statBest = document.getElementById('stat-best-streak');
+            
+            if (streakDisplay) streakDisplay.textContent = `${appData.stats.currentStreak} Days`;
+            if (statCurrent) statCurrent.textContent = appData.stats.currentStreak;
+            if (statBest) statBest.textContent = appData.stats.bestStreak;
         }
 
 
@@ -6194,7 +6223,10 @@
             if (viewName === 'calendar') {
                 renderCalendar(currentCalendarYear, currentCalendarMonth);
             }
-            if (viewName === 'overview') updateOverview();
+            if (viewName === 'overview') {
+                updateOverview();
+                if (window.renderDashboard) window.renderDashboard();
+            }
             if (viewName === 'care-hub') renderCareHub();
         }
 
@@ -6322,9 +6354,13 @@
             if (fillEl) fillEl.style.width = `${percent}%`;
             if (textEl) textEl.innerText = `${percent}%`;
 
-            document.getElementById('d-total').innerText = total;
-            document.getElementById('d-done').innerText = completed;
-            document.getElementById('d-todo').innerText = todo;
+            const dTotal = document.getElementById('d-total');
+            const dDone = document.getElementById('d-done');
+            const dTodo = document.getElementById('d-todo');
+            
+            if (dTotal) dTotal.innerText = total;
+            if (dDone) dDone.innerText = completed;
+            if (dTodo) dTodo.innerText = todo;
 
             // Render Streak & Completion Logic (Merged)
             if (typeof renderStreak === 'function') renderStreak();
@@ -6624,7 +6660,6 @@
                     med.inventory--;
                     med.history.push({ timestamp: Date.now(), action: 'taken' });
                     saveData();
-                    // renderMeds moved to src/ui/pages/careHub.js
                 }
             }
         }
@@ -7247,6 +7282,12 @@
             document.body.appendChild(overlay);
         };
     </script>
+    <script type="module">
+        import { renderCareHub } from './src/ui/pages/careHub.js';
+        import { renderDashboard } from './src/ui/pages/dashboard.js';
+        
+        window.renderCareHub = renderCareHub;
+        window.renderDashboard = renderDashboard;
+    </script>
 </body>
-
 </html>
