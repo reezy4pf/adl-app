@@ -3795,6 +3795,22 @@
                 }
             }
 
+            // 1c. Fetch Today's Sleep Log (Fix for Stats Reset)
+            const todayStr = new Date().toISOString().split('T')[0];
+            const { data: sleepData, error: sleepError } = await supabase
+                .from('sleep_logs')
+                .select('duration_minutes')
+                .eq('user_id', currentUser.id)
+                .eq('log_date', todayStr)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+
+            if (sleepData) {
+                if (!appData.sleep) appData.sleep = {};
+                appData.sleep.durationMinutes = sleepData.duration_minutes;
+            }
+
             // Map DB structure (snake_case) to App structure (camelCase)
 
             // Map DB structure (snake_case) to App structure (camelCase)
