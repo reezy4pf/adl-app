@@ -37,7 +37,7 @@ const calculateAngle = (x, y, centerX, centerY) => {
 };
 
 
-export function renderSleepTracker(targetElement) {
+export function renderSleepTracker(targetElement, initialConfig = null) {
   const container = typeof targetElement === 'string'
     ? document.getElementById(targetElement)
     : targetElement;
@@ -45,9 +45,15 @@ export function renderSleepTracker(targetElement) {
   if (!container) return;
 
   // --- State ---
-  // Load from LocalStorage if available
+  // Load from Config (DB) -> LocalStorage -> Default
   const savedSchedule = localStorage.getItem('sleep_schedule_prefs');
-  const defaults = savedSchedule ? JSON.parse(savedSchedule) : { start: 300, end: 180 };
+  let defaults = { start: 300, end: 180 };
+
+  if (initialConfig && initialConfig.start !== undefined) {
+    defaults = initialConfig;
+  } else if (savedSchedule) {
+    defaults = JSON.parse(savedSchedule);
+  }
 
   let startAngle = defaults.start; // 300 = 10 PM
   let endAngle = defaults.end;   // 180 = 6 AM
@@ -677,7 +683,7 @@ export function renderSleepTracker(targetElement) {
           .insert({
             user_id: window.currentUser.id,
             duration_minutes: minutes,
-            notes: `Slept from angle ${startAngle} to ${endAngle}`
+            notes: `Slept from angle ${startAngle} to ${endAngle} [Config: ${JSON.stringify({ start: startAngle, end: endAngle })}]`
           });
 
         if (error) throw error;

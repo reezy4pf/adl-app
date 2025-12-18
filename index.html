@@ -3809,6 +3809,18 @@
             if (sleepData) {
                 if (!appData.sleep) appData.sleep = {};
                 appData.sleep.durationMinutes = sleepData.duration_minutes;
+                
+                // Parse Config from Notes
+                if (sleepData.notes && sleepData.notes.includes('[Config:')) {
+                    try {
+                        const match = sleepData.notes.match(/\[Config: (.*?)\]/);
+                        if (match && match[1]) {
+                            appData.sleep.config = JSON.parse(match[1]);
+                        }
+                    } catch (e) {
+                        console.error("Failed to parse sleep config", e);
+                    }
+                }
             }
 
             // Map DB structure (snake_case) to App structure (camelCase)
@@ -5900,7 +5912,8 @@
             const sleepMins = (window.appData && window.appData.sleep && window.appData.sleep.durationMinutes) || 0;
 
             // Updated Formula: 24h - Allocated - Sleep = Unallocated
-            const freeMins = (24 * 60) - totalAllocMins - sleepMins;
+            let freeMins = (24 * 60) - totalAllocMins - sleepMins;
+            if (freeMins < 0) freeMins = 0; // Prevent negative
 
             const allocH = Math.floor(totalAllocMins / 60);
             const allocM = totalAllocMins % 60;
@@ -5909,13 +5922,24 @@
 
             const sleepH = Math.floor(sleepMins / 60);
             const sleepM = sleepMins % 60;
-            const elSleep = document.getElementById('d-sleep-stat'); // New Element
+            const elSleep = document.getElementById('d-sleep-stat'); 
             if (elSleep) elSleep.textContent = `${sleepH}h ${sleepM} m`;
 
             const freeH = Math.floor(freeMins / 60);
             const freeM = freeMins % 60;
+            // The user report screenshot shows "Unallocated" using id="d-free" implied by my previous read? 
+            // Wait, previous view showed: const elFree = document.getElementById('d-free');
+            // But I suspected it might be d-unalloc.
+            // Let's safe-guard and try updating BOTH if they exist, or correct the ID based on my earlier check (which was inconclusive).
+            // Actually, I saw `d-unalloc` in `renderTasks` (line 5879).
+            // I saw `d-free` in `updateTimeStats` (line 5917).
+            // I will update BOTH to cover bases, or rename variables to match reality.
+            
             const elFree = document.getElementById('d-free');
             if (elFree) elFree.textContent = `${freeH}h ${freeM} m`;
+            
+            const elUnalloc = document.getElementById('d-unalloc');
+            if (elUnalloc) elUnalloc.textContent = `${freeH}h ${freeM} m`;
         }
 
         // --- LIFECYCLE ---

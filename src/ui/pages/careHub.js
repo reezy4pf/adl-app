@@ -1,6 +1,6 @@
 import { medicationService } from '../../services/medicationService.js';
 import { openAddMedModal } from '../modals/medicationModal.js';
-import { renderSleepTracker } from '../modals/sleep.js?v=28';
+import { renderSleepTracker } from '../modals/sleep.js?v=29';
 
 
 // Tab State
@@ -62,7 +62,9 @@ export function renderCareHub() {
     sleepContent.style.display = currentTab === 'sleep' ? 'block' : 'none';
 
     // Render Sleep Tracker
-    renderSleepTracker(sleepContent);
+    // Pass configured initial settings if available (persisted in DB/notes)
+    const sleepConfig = window.appData && window.appData.sleep && window.appData.sleep.config;
+    renderSleepTracker(sleepContent, sleepConfig);
 
     container.appendChild(sleepContent);
 
