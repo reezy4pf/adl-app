@@ -47,20 +47,26 @@ export function renderSleepTracker(targetElement, initialConfig = null) {
   // --- State ---
   // Load from Config (DB) -> LocalStorage -> Default
   const savedSchedule = localStorage.getItem('sleep_schedule_prefs');
-  let defaults = { start: 300, end: 180 };
+  let defaults = { start: 300, end: 180, days: [0, 1, 2, 3, 4] };
 
-  if (initialConfig && initialConfig.start !== undefined) {
-    defaults = initialConfig;
+  if (initialConfig) {
+      if (initialConfig.start !== undefined) defaults.start = initialConfig.start;
+      if (initialConfig.end !== undefined) defaults.end = initialConfig.end;
+      if (initialConfig.selected_days !== undefined) defaults.days = initialConfig.selected_days;
   } else if (savedSchedule) {
-    defaults = JSON.parse(savedSchedule);
+    const parsed = JSON.parse(savedSchedule);
+    defaults.start = parsed.start ?? defaults.start;
+    defaults.end = parsed.end ?? defaults.end;
+    defaults.days = parsed.days ?? defaults.days;
   }
 
-  let startAngle = defaults.start; // 300 = 10 PM
-  let endAngle = defaults.end;   // 180 = 6 AM
+  let startAngle = defaults.start; 
+  let endAngle = defaults.end;   
   let openAccordionIndex = null;
-  let isDragging = null; // 'start' or 'end' or null
-  let selectedDays = [0, 1, 2, 3, 4]; // Default Mon-Fri
+  let isDragging = null; 
+  let selectedDays = [...defaults.days]; 
   let hygieneStatus = { noCoffee: false, noScreens: true, darkRoom: false, tookMeds: false };
+  let isDirty = false;
 
   // --- Template ---
   container.innerHTML = `
@@ -122,7 +128,7 @@ export function renderSleepTracker(targetElement, initialConfig = null) {
         <!-- 4. Save Button -->
         <button id="save-sleep-btn" style="
             width: 100%;
-            background-color: #284393;
+            background-color: #D1D5DB;
             color: white;
             border: none;
             padding: 16px;
@@ -130,7 +136,7 @@ export function renderSleepTracker(targetElement, initialConfig = null) {
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 4px 6px -1px rgba(40, 67, 147, 0.2);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             transition: all 0.2s;
         ">
             Save Sleep Log
@@ -141,7 +147,27 @@ export function renderSleepTracker(targetElement, initialConfig = null) {
     `;
 
   // --- Render Functions ---
+  const updateSaveButtonState = () => {
+      const btn = container.querySelector('#save-sleep-btn');
+      if (!btn) return;
+      if (isDirty) {
+          btn.style.backgroundColor = "#284393";
+          btn.style.boxShadow = "0 4px 6px -1px rgba(40, 67, 147, 0.2)";
+      } else {
+          btn.style.backgroundColor = "#D1D5DB";
+          btn.style.boxShadow = "0 4px 6px -1px rgba(0, 0, 0, 0.1)";
+      }
+  };
+
+  const setDirty = () => {
+      isDirty = true;
+      updateSaveButtonState();
+      // Also persist to localStorage for immediate UI state on reload
+      localStorage.setItem('sleep_schedule_prefs', JSON.stringify({ start: startAngle, end: endAngle, days: selectedDays }));
+  };
+
   const updateClockVisuals = () => {
+
     const svg = container.querySelector('#sleep-clock-svg');
     if (!svg) return;
 
@@ -274,6 +300,7 @@ export function renderSleepTracker(targetElement, initialConfig = null) {
         } else {
           selectedDays.push(idx);
         }
+        setDirty();
         renderDaySelector();
       };
     });
@@ -648,14 +675,11 @@ export function renderSleepTracker(targetElement, initialConfig = null) {
     } else {
       endAngle = snapped;
     }
+    setDirty();
     updateClockVisuals();
   };
 
   const stopHandler = () => {
-    if (isDragging) {
-      // Save preferences
-      localStorage.setItem('sleep_schedule_prefs', JSON.stringify({ start: startAngle, end: endAngle }));
-    }
     isDragging = null;
   };
 
@@ -678,21 +702,40 @@ export function renderSleepTracker(targetElement, initialConfig = null) {
       saveBtn.textContent = "Saving...";
 
       try {
-        const { error } = await supabase
+        // 1. Log the event
+        const { error: logError } = await supabase
           .from('sleep_logs')
           .insert({
             user_id: window.currentUser.id,
             duration_minutes: minutes,
-            notes: `Slept from angle ${startAngle} to ${endAngle} [Config: ${JSON.stringify({ start: startAngle, end: endAngle })}]`
+            notes: `Slept from angle ${startAngle} to ${endAngle} [Config: ${JSON.stringify({ start: startAngle, end: endAngle, selected_days: selectedDays })}]`
           });
 
-        if (error) throw error;
+        if (logError) throw logError;
+
+        // 2. Upsert the Master Schedule
+        const { error: schedError } = await supabase
+          .from('sleep_schedules')
+          .upsert({
+              user_id: window.currentUser.id,
+              start_angle: startAngle,
+              end_angle: endAngle,
+              selected_days: selectedDays,
+              updated_at: new Date().toISOString()
+          });
+
+          if (schedError) {
+              console.warn("Failed to upsert sleep schedule (non-critical):", schedError);
+          }
 
         saveBtn.textContent = "Saved!";
-        saveBtn.style.backgroundColor = "var(--success)";
+        saveBtn.style.backgroundColor = "#10B981"; // Success Green
+        isDirty = false;
+        updateSaveButtonState();
+
         setTimeout(() => {
           saveBtn.textContent = origText;
-          saveBtn.style.backgroundColor = "";
+          updateSaveButtonState();
         }, 2000);
       } catch (err) {
         console.error(err);
@@ -709,4 +752,5 @@ export function renderSleepTracker(targetElement, initialConfig = null) {
   renderAccordion();
   renderBrownNoiseCard();
   renderDaySelector();
+  updateSaveButtonState();
 }

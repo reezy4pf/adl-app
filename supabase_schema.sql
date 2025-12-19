@@ -52,3 +52,21 @@ with check (auth.uid() = user_id);
 alter table public.tasks add column if not exists location text;
 alter table public.tasks add column if not exists ends_next_day boolean default false;
 alter table public.tasks add column if not exists color text;
+-- Create Sleep Schedules Table (Master Schedule)
+create table if not exists public.sleep_schedules (
+    user_id uuid references auth.users not null primary key,
+    start_angle numeric default 300,
+    end_angle numeric default 180,
+    selected_days jsonb default '[0,1,2,3,4]'::jsonb,
+    updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Enable RLS for Sleep Schedules
+alter table public.sleep_schedules enable row level security;
+
+-- Policy for Sleep Schedules
+drop policy if exists "Users can manage their own sleep schedule" on public.sleep_schedules;
+create policy "Users can manage their own sleep schedule"
+on public.sleep_schedules for all
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);

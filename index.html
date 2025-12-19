@@ -3820,11 +3820,34 @@
                 }
             }
 
-            // 1c. Fetch Today's Sleep Log (Fix for Stats Reset)
+            // 1c. Fetch Sleep Schedule & Today's Log
             const todayStr = new Date().toISOString().split('T')[0];
+            
+            // Try fetching from dedicated master schedule table first
+            const { data: schedData, error: schedError } = await supabase
+                .from('sleep_schedules')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .single();
+
+            if (schedData && !schedError) {
+                if (!appData.sleep) appData.sleep = {};
+                appData.sleep.config = {
+                    start: schedData.start_angle,
+                    end: schedData.end_angle,
+                    selected_days: schedData.selected_days
+                };
+                // Sync to localStorage
+                localStorage.setItem('sleep_schedule_prefs', JSON.stringify({ 
+                    start: schedData.start_angle, 
+                    end: schedData.end_angle, 
+                    days: schedData.selected_days 
+                }));
+            }
+
             const { data: sleepData, error: sleepError } = await supabase
                 .from('sleep_logs')
-                .select('duration_minutes')
+                .select('duration_minutes, notes')
                 .eq('user_id', currentUser.id)
                 .eq('log_date', todayStr)
                 .order('created_at', { ascending: false })
@@ -3835,15 +3858,15 @@
                 if (!appData.sleep) appData.sleep = {};
                 appData.sleep.durationMinutes = sleepData.duration_minutes;
                 
-                // Parse Config from Notes
-                if (sleepData.notes && sleepData.notes.includes('[Config:')) {
+                // Fallback: Parse Config from Notes if schedData was missing
+                if (!appData.sleep.config && sleepData.notes && sleepData.notes.includes('[Config:')) {
                     try {
                         const match = sleepData.notes.match(/\[Config: (.*?)\]/);
                         if (match && match[1]) {
                             appData.sleep.config = JSON.parse(match[1]);
                         }
                     } catch (e) {
-                        console.error("Failed to parse sleep config", e);
+                        console.error("Failed to parse sleep config from legacy notes", e);
                     }
                 }
             }
